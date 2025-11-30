@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HAYATİ KİMLİK | ULTRA</title>
+    <style>
+        /* --- OPTİMİZE EDİLMİŞ CSS (Kasma Yapmaz) --- */
+        :root {
+            --bg: #050505;
+            --panel: #111;
+            --blue: #00f3ff;
+            --red: #ff003c;
+            --green: #00ff9d;
+            --gold: #ffd700;
+            --text: #eee;
+        }
+
+        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; font-family: 'Courier New', monospace; }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg); color: var(--text);
+            height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+
+        /* Ekran Yönetimi */
+        .screen {
+            width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            display: none; flex-direction: column; padding: 15px;
+            background: var(--bg); overflow-y: auto; z-index: 1;
+        }
+        .active { display: flex; animation: fade 0.3s; }
+
+        /* Kart Tasarımı */
+        .card {
+            background: rgba(255,255,255,0.05); border: 1px solid #333;
+            border-radius: 15px; padding: 20px; text-align: center;
+            margin-bottom: 15px; backdrop-filter: blur(5px);
+        }
+        .avatar {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 3px solid var(--blue); object-fit: cover;
+            margin-top: -10px; background: #222;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+        }
+
+        /* Butonlar */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn {
+            background: linear-gradient(145deg, #1a1a1a, #222);
+            border: 1px solid #444; color: white; padding: 15px;
+            border-radius: 12px; font-weight: bold; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; gap: 5px;
+            transition: 0.2s;
+        }
+        .btn:active { transform: scale(0.95); border-color: var(--blue); }
+        .icon { font-size: 22px; margin-bottom: 5px; }
+
+        .sos-btn {
+            background: linear-gradient(45deg, #cc0000, #ff003c);
+            width: 100%; border: none; padding: 18px; border-radius: 50px;
+            color: white; font-size: 20px; font-weight: bold; letter-spacing: 2px;
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
+            animation: pulse 1.5s infinite; margin-top: auto;
+        }
+
+        /* Parmak İzi Tarayıcı */
+        .fingerprint-area {
+            width: 80px; height: 80px; border: 2px dashed var(--blue);
+            border-radius: 50%; margin: 20px auto;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 40px; color: var(--blue); cursor: pointer;
+            position: relative; overflow: hidden;
+        }
+        .scan-line {
+            position: absolute; width: 100%; height: 2px; background: var(--blue);
+            top: 0; animation: scan 1.5s infinite linear; display: none;
+        }
+        .fingerprint-area:active .scan-line { display: block; }
+
+        /* Admin & Edit */
+        .editable { border-bottom: 1px dashed var(--gold); color: var(--gold); }
+        .input-box {
+            background: #111; border: 1px solid var(--blue); color: var(--blue);
+            padding: 15px; width: 100%; text-align: center; font-size: 18px;
+            border-radius: 10px; margin-bottom: 20px; letter-spacing: 5px;
+        }
+
+        /* Animasyonlar */
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        
+        /* Chat */
+        .chat-box { flex: 1; overflow-y: auto; background: #080808; border: 1px solid #222; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+        .msg { padding: 10px; margin-bottom: 8px; border-radius: 5px; font-size: 13px; max-width: 85%; }
+        .bot { background: #1a1a2e; border-left: 3px solid var(--blue); color: #ccc; align-self: flex-start; }
+        .user { background: #0f2e1a; border-right: 3px solid var(--green); color: white; margin-left: auto; text-align: right; }
+        .opt-btn { width: 100%; padding: 12px; background: #111; border: 1px solid #333; color: var(--blue); margin-top: 5px; text-align: left; border-radius: 5px; }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="mainScreen" class="screen active">
+        <div style="display:flex; justify-content:space-between; padding:0 10px;">
+            <div style="font-size:12px; color:gray;">SİSTEM: ONLİNE</div>
+            <div onclick="showAuth('admin')" style="font-size:20px;">⚙️</div>
+        </div>
+
+        <div class="card" style="margin-top:10px;">
+            <img src="https://via.placeholder.com/100" class="avatar" id="d_img">
+            <h2 id="d_name" style="margin: 10px 0;">YÜKLENİYOR...</h2>
+            <div class="tag" id="d_dis" style="border-color:var(--red); color:var(--red)">...</div>
+            <div class="tag" id="d_bld" style="border-color:var(--blue); color:var(--blue)">...</div>
+        </div>
+
+        <div class="grid">
+            <div class="btn" onclick="callContact(0)">
+                <span class="icon">📞</span> <span id="lbl_c1">ANNE</span>
+            </div>
+            <div class="btn" onclick="startAI()">
+                <span class="icon">🧠</span> AI TRİYAJ
+            </div>
+            <div class="btn" onclick="showAuth('private')">
+                <span class="icon">🔒</span> ÖZEL BİLGİ
+            </div>
+            <div class="btn" onclick="sendRealSMS()">
+                <span class="icon">📍</span> KONUM AT
+            </div>
+        </div>
+
+        <button class="sos-btn" onclick="window.location.href='tel:112'">🆘 112 ACİL</button>
+    </div>
+
+    <div id="authScreen" class="screen" style="justify-content:center; text-align:center;">
+        <h2 id="authTitle" style="color:var(--blue)">GÜVENLİK KONTROLÜ</h2>
+        
+        <div id="fingerAuth" class="hidden">
+            <p>Erişim için parmağınızı basılı tutun</p>
+            <div class="fingerprint-area" ontouchstart="startScan()" ontouchend="stopScan()" onmousedown="startScan()" onmouseup="stopScan()">
+                <div class="scan-line"></div>
+                👆
+            </div>
+            <div id="scanStatus" style="color:gray; font-size:12px; height:20px;">Bekleniyor...</div>
+        </div>
+
+        <div id="passAuth" class="hidden">
+            <p>Yönetici Şifresi Girin</p>
+            <input type="password" id="passInput" class="input-box" placeholder="••••">
+            <button class="btn" style="width:100%; justify-content:center;" onclick="checkAdmin()">GİRİŞ</button>
+        </div>
+
+        <button class="btn" style="margin-top:20px; border-color:var(--red); color:var(--red);" onclick="goHome()">İPTAL</button>
+    </div>
+
+    <div id="privateScreen" class="screen">
+        <h2 style="color:var(--gold); text-align:center;">GİZLİ HASTA DOSYASI</h2>
+        <div class="card" style="text-align:left;">
+            <p><strong>TC KİMLİK:</strong> <span id="p_tc">...</span></p>
+            <p><strong>SİGORTA:</strong> <span id="p_ins">...</span></p>
+            <p><strong>ÖZEL NOT:</strong> <span id="p_note">...</span></p>
+            <p><strong>İLAÇLAR:</strong> <span id="p_meds">...</span></p>
+        </div>
+        <button class="btn" onclick="goHome()">KAPAT</button>
+    </div>
+
+    <div id="adminScreen" class="screen">
+        <h2 style="color:var(--red); text-align:center;">YÖNETİCİ DÜZENLEME</h2>
+        <div style="font-size:11px; text-align:center; color:gray; margin-bottom:10px;">Değiştirmek istediğiniz verinin üzerine tıklayıp yazın.</div>
+        
+        <div class="card" style="text-align:left;">
+            <p>AD SOYAD: <span id="e_name" contenteditable="true" class="editable"></span></p>
+            <p>HASTALIK: <span id="e_dis" contenteditable="true" class="editable"></span></p>
+            <p>KAN: <span id="e_bld" contenteditable="true" class="editable"></span></p>
+            <hr style="border-color:#333">
+            <p>TC NO: <span id="e_tc" contenteditable="true" class="editable"></span></p>
+            <p>SİGORTA: <span id="e_ins" contenteditable="true" class="editable"></span></p>
+            <p>NOTLAR: <span id="e_note" contenteditable="true" class="editable"></span></p>
+        </div>
+
+        <div class="card" style="text-align:left;">
+            <div style="color:var(--blue); margin-bottom:5px;">AİLE NUMARALARI</div>
+            <p>1. <span id="e_c1_name" contenteditable="true" class="editable"></span>: <span id="e_c1_tel" contenteditable="true" class="editable"></span></p>
+            <p>2. <span id="e_c2_name" contenteditable="true" class="editable"></span>: <span id="e_c2_tel" contenteditable="true" class="editable"></span></p>
+            <p>3. <span id="e_c3_name" contenteditable="true" class="editable"></span>: <span id="e_c3_tel" contenteditable="true" class="editable"></span></p>
+        </div>
+
+        <button class="btn" style="background:var(--green); color:black;" onclick="saveAll()">KAYDET</button>
+        <button class="btn" style="margin-top:10px;" onclick="goHome()">İPTAL</button>
+    </div>
+
+    <div id="aiScreen" class="screen">
+        <h3 style="text-align:center; color:var(--blue); border-bottom:1px solid #333;">AI TRİYAJ</h3>
+        <div class="chat-box" id="chatBox"></div>
+        <button class="btn" onclick="goHome()">ÇIKIŞ</button>
+    </div>
+
+    <script>
+        /* --- VERİTABANI (RAM) --- */
+        // Varsayılan veriler. Admin panelinde değiştirilince burası güncellenir.
+        let DB = {
+            name: "TALHA YILMAZ",
+            disease: "TİP 1 DİYABET",
+            blood: "A Rh+",
+            tc: "12345678901",
+            insurance: "Allianz Özel",
+            note: "Glukagon iğnesi dolapta. İnsülin pompası kullanıyor.",
+            meds: "Humalog, Lantus",
+            contacts: [
+                { name: "ANNE", tel: "05551112233" },
+                { name: "BABA", tel: "05554445566" },
+                { name: "DOKTOR", tel: "02124440000" }
+            ]
+        };
+
+        /* --- BAŞLANGIÇ --- */
+        window.onload = () => {
+            renderHome();
+            // Fotoğrafı rastgele bir insan yüzü yapalım (Demo için)
+            document.getElementById('d_img').src = "https://thispersondoesnotexist.com/";
+        };
+
+        function goHome() {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById('mainScreen').style.display = 'flex';
+        }
+
+        function renderHome() {
+            document.getElementById('d_name').innerText = DB.name;
+            document.getElementById('d_dis').innerText = "⚠️ " + DB.disease;
+            document.getElementById('d_bld').innerText = DB.blood;
+            document.getElementById('lbl_c1').innerText = DB.contacts[0].name;
+        }
+
+        /* --- GERÇEK SMS FONKSİYONU --- */
+        function sendRealSMS() {
+            // Bu kod telefonun kendi SMS uygulamasını açar
+            let msg = `ACİL DURUM! ${DB.name} için acil yardım gerekiyor. Konum: 41.0082, 28.9784 (Tahmini)`;
+            let num = DB.contacts[0].tel; // Annenin numarasına atar
+            
+            // iPhone ve Android uyumlu link
+            window.open(`sms:${num}?&body=${encodeURIComponent(msg)}`, '_self');
+        }
+
+        /* --- ARAMA --- */
+        function callContact(idx) {
+            window.location.href = `tel:${DB.contacts[idx].tel}`;
+        }
+
+        /* --- GÜVENLİK YÖNETİMİ --- */
+        let scanTimer;
+        
+        function showAuth(type) {
+            document.getElementById('mainScreen').style.display = 'none';
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('fingerAuth').classList.add('hidden');
+            document.getElementById('passAuth').classList.add('hidden');
+
+            if(type === 'private') {
+                document.getElementById('authTitle').innerText = "BİYOMETRİK DOĞRULAMA";
+                document.getElementById('fingerAuth').classList.remove('hidden');
+            } else {
+                document.getElementById('authTitle').innerText = "YÖNETİCİ GİRİŞİ";
+                document.getElementById('passAuth').classList.remove('hidden');
+            }
+        }
+
+        /* --- PARMAK İZİ SİMÜLASYONU --- */
+        function startScan() {
+            document.getElementById('scanStatus').innerText = "Taranıyor... %20";
+            document.getElementById('scanStatus').style.color = "var(--blue)";
+            
+            // Basılı tutunca 1 saniye sonra açılır
+            scanTimer = setTimeout(() => {
+                document.getElementById('scanStatus').innerText = "DOĞRULANDI ✔";
+                document.getElementById('scanStatus').style.color = "var(--green)";
+                if(navigator.vibrate) navigator.vibrate([50,50]);
+                setTimeout(openPrivateData, 500);
+            }, 1000);
+        }
+
+        function stopScan() {
+            clearTimeout(scanTimer);
+            document.getElementById('scanStatus').innerText = "Başarısız. Tekrar deneyin.";
+            document.getElementById('scanStatus').style.color = "var(--red)";
+        }
+
+        function openPrivateData() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('privateScreen').style.display = 'flex';
+            
+            document.getElementById('p_tc').innerText = DB.tc;
+            document.getElementById('p_ins').innerText = DB.insurance;
+            document.getElementById('p_note').innerText = DB.note;
+            document.getElementById('p_meds').innerText = DB.meds;
+        }
+
+        /* --- YÖNETİCİ (ADMIN) --- */
+        function checkAdmin() {
+            let p = document.getElementById('passInput').value;
+            if(p === "01Talha55") {
+                loadAdminEditor();
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('adminScreen').style.display = 'flex';
+                document.getElementById('passInput').value = "";
+            } else {
+                alert("HATALI ŞİFRE!");
+            }
+        }
+
+        function loadAdminEditor() {
+            // Verileri editöre doldur
+            document.getElementById('e_name').innerText = DB.name;
+            document.getElementById('e_dis').innerText = DB.disease;
+            document.getElementById('e_bld').innerText = DB.blood;
+            document.getElementById('e_tc').innerText = DB.tc;
+            document.getElementById('e_ins').innerText = DB.insurance;
+            document.getElementById('e_note').innerText = DB.note;
+            
+            document.getElementById('e_c1_name').innerText = DB.contacts[0].name;
+            document.getElementById('e_c1_tel').innerText = DB.contacts[0].tel;
+            document.getElementById('e_c2_name').innerText = DB.contacts[1].name;
+            document.getElementById('e_c2_tel').innerText = DB.contacts[1].tel;
+            document.getElementById('e_c3_name').innerText = DB.contacts[2].name;
+            document.getElementById('e_c3_tel').innerText = DB.contacts[2].tel;
+        }
+
+        function saveAll() {
+            // Editörden verileri çekip DB'ye kaydet
+            DB.name = document.getElementById('e_name').innerText;
+            DB.disease = document.getElementById('e_dis').innerText;
+            DB.blood = document.getElementById('e_bld').innerText;
+            DB.tc = document.getElementById('e_tc').innerText;
+            DB.insurance = document.getElementById('e_ins').innerText;
+            DB.note = document.getElementById('e_note').innerText;
+            
+            DB.contacts[0].name = document.getElementById('e_c1_name').innerText;
+            DB.contacts[0].tel = document.getElementById('e_c1_tel').innerText;
+            DB.contacts[1].name = document.getElementById('e_c2_name').innerText;
+            DB.contacts[1].tel = document.getElementById('e_c2_tel').innerText;
+            DB.contacts[2].name = document.getElementById('e_c3_name').innerText;
+            DB.contacts[2].tel = document.getElementById('e_c3_tel').innerText;
+
+            alert("KAYDEDİLDİ!");
+            renderHome();
+            goHome();
+        }
+
+        /* --- ZEKİ AI --- */
+        function startAI() {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById('aiScreen').style.display = 'flex';
+            document.getElementById('chatBox').innerHTML = "";
+            aiMsg(`Merhaba. ${DB.name} için acil durum analizi yapıyorum. Hastanın şu anki durumu nedir?`, [
+                {t:"BAYGIN / HAREKETSİZ", v:"baygin"},
+                {t:"TİTREME / NÖBET", v:"nobet"},
+                {t:"BİLİNÇ BULANIK / TERLİ", v:"seker"}
+            ]);
+        }
+
+        function aiMsg(txt, opts) {
+            let box = document.getElementById('chatBox');
+            box.innerHTML += `<div class="msg bot">${txt}</div>`;
+            if(opts) {
+                opts.forEach(o => {
+                    box.innerHTML += `<div class="opt-btn" onclick="aiReply('${o.v}')">➤ ${o.t}</div>`;
+                });
+            }
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function aiReply(val) {
+            let box = document.getElementById('chatBox');
+            
+            if(val === "baygin") {
+                aiMsg("Nefes alıyor mu? Göğüs hareketi var mı?", [
+                    {t:"EVET, ALIYOR", v:"nefes_var"},
+                    {t:"HAYIR, ALMIYOR", v:"nefes_yok"}
+                ]);
+            } else if(val === "nefes_var") {
+                aiMsg("✅ İYİ. Hastayı YAN ÇEVİRİN (Koma pozisyonu). Kusarsa boğulmasın. 112'yi arayın.", null);
+            } else if(val === "nefes_yok") {
+                aiMsg("🚨 KIRMIZI ALARM! Kalp durmuş olabilir. Hemen KALP MASAJINA başlayın ve 112'yi arayın!", null);
+            } 
+            
+            else if(val === "seker") {
+                aiMsg("Ağzında aseton (oje çıkarıcı) gibi bir koku var mı?", [
+                    {t:"EVET, KOKUYOR", v:"keto"},
+                    {t:"HAYIR, KOKMUYOR", v:"hipo"}
+                ]);
+            } else if(val === "keto") {
+                aiMsg("⚠️ YÜKSEK ŞEKER KOMAsı olabilir. İnsülin gerekebilir. Su içirin ve 112'yi arayın.", null);
+            } else if(val === "hipo") {
+                aiMsg("✅ ŞEKER DÜŞMÜŞ. Hemen meyve suyu veya kesme şeker verin. 15 dk bekleyin.", null);
+            }
+        }
+    </script>
+</body>
+</html>
